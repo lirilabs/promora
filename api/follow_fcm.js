@@ -1,61 +1,61 @@
 import admin from "firebase-admin";
 
 /* ======================================================
-   🔒 Safe ENV Loader
+   FORCE NODE RUNTIME (VERCEL)
 ====================================================== */
-function getEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing ENV: ${name}`);
-  }
-  return value;
-}
+export const config = {
+  runtime: "nodejs",
+};
 
 /* ======================================================
-   🔥 Firebase Admin Init (Safe)
+   FIREBASE ADMIN INIT (SAFE + VERBOSE)
 ====================================================== */
-function initFirebase() {
-  if (admin.apps.length) return;
+if (!admin.apps.length) {
+  const {
+    FIREBASE_PROJECT_ID,
+    FIREBASE_CLIENT_EMAIL,
+    FIREBASE_PRIVATE_KEY,
+  } = process.env;
 
-  const projectId = getEnv("FIREBASE_PROJECT_ID");
-  const clientEmail = getEnv("FIREBASE_CLIENT_EMAIL");
-  const privateKeyRaw = getEnv("FIREBASE_PRIVATE_KEY");
-
-  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
+  if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
+    throw new Error("Missing Firebase Admin ENV variables");
+  }
 
   admin.initializeApp({
     credential: admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
+      projectId: FIREBASE_PROJECT_ID,
+      clientEmail: FIREBASE_CLIENT_EMAIL,
+      privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     }),
   });
 
-  console.log("✅ Firebase initialized");
+  console.log("🔥 Firebase Admin initialized:", FIREBASE_PROJECT_ID);
 }
 
 /* ======================================================
-   🚀 API Handler
+   API HANDLER
 ====================================================== */
 export default async function handler(req, res) {
   /* ---------- CORS ---------- */
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
+    return res.status(405).json({
+      success: false,
+      error: "Method Not Allowed",
+    });
   }
 
   try {
-    /* ---------- INIT ---------- */
-    initFirebase();
-
-    /* ---------- BODY ---------- */
     const {
       token,
       title,
@@ -65,15 +65,13 @@ export default async function handler(req, res) {
       data = {},
     } = req.body || {};
 
-    /* ---------- VALIDATION ---------- */
     if (!token || !title || !body) {
       return res.status(400).json({
         success: false,
-        error: "token, title and body are required",
+        error: "token, title, and body are required",
       });
     }
 
-    /* ---------- MESSAGE BUILD ---------- */
     const message = {
       token,
 
@@ -93,8 +91,8 @@ export default async function handler(req, res) {
       android: {
         priority: "high",
         notification: {
-          sound: "default",
           channelId: "default",
+          sound: "default",
           ...(imageUrl ? { imageUrl } : {}),
         },
       },
@@ -103,7 +101,7 @@ export default async function handler(req, res) {
         payload: {
           aps: {
             sound: "default",
-            mutableContent: true,
+            "mutable-content": 1,
           },
         },
         fcmOptions: {
@@ -112,24 +110,19 @@ export default async function handler(req, res) {
       },
     };
 
-    /* ---------- SEND ---------- */
     const messageId = await admin.messaging().send(message);
 
-    /* ---------- RESPONSE ---------- */
     return res.status(200).json({
       success: true,
       messageId,
     });
 
   } catch (err) {
-    /* ---------- ERROR HANDLING ---------- */
     console.error("❌ FCM ERROR:", err);
 
     return res.status(500).json({
       success: false,
       error: err.message,
-      hint:
-        "Check Firebase ENV variables or private key formatting",
     });
   }
 }
