@@ -2,94 +2,472 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Credible – FCM Push Console</title>
+<title>FCM Push Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
 
 <style>
-body {
-  font-family: system-ui, -apple-system;
-  background: #0b0b0b;
-  color: #fff;
-  padding: 24px;
-}
-.container {
-  max-width: 520px;
-  margin: auto;
-}
-input, textarea, button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  background: #111;
-  color: #fff;
-  border: 1px solid #262626;
-  border-radius: 8px;
-}
-button {
-  background: #2563eb;
-  cursor: pointer;
-}
-pre {
-  margin-top: 14px;
-  background: #111;
-  padding: 12px;
-  border-radius: 8px;
-}
+  /* ─── Reset & Variables ─────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #080c10;
+    --surface:  #0d1117;
+    --border:   #1e2a38;
+    --border-hi:#2e4060;
+    --text:     #e2eaf4;
+    --muted:    #5a7a9a;
+    --accent:   #3b82f6;
+    --accent-hi:#60a5fa;
+    --success:  #22c55e;
+    --error:    #ef4444;
+    --warn:     #f59e0b;
+    --radius:   10px;
+    --mono:     'JetBrains Mono', monospace;
+    --display:  'Syne', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── Background grid ───────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Layout ────────────────────────────────────────── */
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px 60px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(59,130,246,.06), 0 24px 60px rgba(0,0,0,.6);
+    animation: slideUp .45s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Header ────────────────────────────────────────── */
+  .header {
+    padding: 28px 28px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .header-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #1e3a5f, #1d4ed8);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(59,130,246,.25);
+  }
+
+  .header-text h1 {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+    color: #fff;
+  }
+
+  .header-text p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Status strip ──────────────────────────────────── */
+  .status-strip {
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #7c3aed, var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  /* ─── Form ──────────────────────────────────────────── */
+  .form-body { padding: 24px 28px 28px; }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field label span.required { color: var(--accent); margin-left: 2px; }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    padding: 11px 14px;
+    background: #090e14;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    resize: none;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder { color: #2e4060; }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+  }
+
+  .field textarea { min-height: 80px; line-height: 1.5; }
+
+  /* optional badge */
+  .badge-opt {
+    font-size: 9px;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: #111a24;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ─── Divider ────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* ─── Send button ────────────────────────────────────── */
+  .btn-send {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity .2s, transform .15s, box-shadow .2s;
+    box-shadow: 0 4px 20px rgba(37,99,235,.35);
+  }
+
+  .btn-send:hover:not(:disabled) {
+    opacity: .92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(37,99,235,.5);
+  }
+
+  .btn-send:active:not(:disabled) { transform: translateY(0); }
+
+  .btn-send:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* spinner */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-send.loading .spinner { display: block; }
+  .btn-send.loading .btn-label { opacity: 0; position: absolute; }
+
+  /* ─── Response panel ─────────────────────────────────── */
+  .response-panel {
+    margin-top: 18px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: none;
+    animation: fadeIn .3s ease both;
+  }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  .response-panel.visible { display: block; }
+
+  .response-header {
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .response-panel.success .response-header { background: rgba(34,197,94,.08); color: var(--success); border-bottom: 1px solid rgba(34,197,94,.15); }
+  .response-panel.error   .response-header { background: rgba(239,68,68,.08);  color: var(--error);   border-bottom: 1px solid rgba(239,68,68,.15); }
+  .response-panel.info    .response-header { background: rgba(59,130,246,.08); color: var(--accent);  border-bottom: 1px solid rgba(59,130,246,.15); }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .response-panel.success .dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .response-panel.error   .dot { background: var(--error);   box-shadow: 0 0 6px var(--error); }
+  .response-panel.info    .dot { background: var(--accent);  box-shadow: 0 0 6px var(--accent); }
+
+  .response-body {
+    padding: 14px;
+    background: #07090d;
+  }
+
+  .response-body pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+  }
+
+  /* ─── Footer ────────────────────────────────────────── */
+  .footer {
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .4px;
+    text-align: center;
+  }
+
+  .footer a { color: var(--accent-hi); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
 </style>
 </head>
 
 <body>
-<div class="container">
-  <h2>FCM Push Notification</h2>
+<div class="page">
+  <div class="card">
+    <div class="status-strip"></div>
 
-  <input id="token" placeholder="FCM Device Token" />
-  <input id="title" placeholder="Notification Title" />
-  <textarea id="body" placeholder="Notification Body"></textarea>
-  <input id="imageUrl" placeholder="Image URL (optional)" />
+    <div class="header">
+      <div class="header-icon">🔔</div>
+      <div class="header-text">
+        <h1>FCM Push Console</h1>
+        <p>Firebase Cloud Messaging · Promora</p>
+      </div>
+    </div>
 
-  <button onclick="sendNotification()">Send</button>
-  <pre id="result"></pre>
+    <div class="form-body">
+
+      <!-- API Endpoint -->
+      <div class="field">
+        <label>API Endpoint <span class="required">*</span></label>
+        <input id="apiUrl" type="url"
+          value="https://promora-gold.vercel.app/api/follow_fcm"
+          placeholder="https://your-project.vercel.app/api/follow_fcm" />
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Token -->
+      <div class="field">
+        <label>Device Token <span class="required">*</span></label>
+        <input id="token" type="text" placeholder="FCM registration token…" />
+      </div>
+
+      <!-- Title -->
+      <div class="field">
+        <label>Title <span class="required">*</span></label>
+        <input id="title" type="text" placeholder="Notification title" />
+      </div>
+
+      <!-- Body -->
+      <div class="field">
+        <label>Body <span class="required">*</span></label>
+        <textarea id="body" placeholder="Notification message body…"></textarea>
+      </div>
+
+      <!-- Image URL (optional) -->
+      <div class="field">
+        <label>Image URL <span class="badge-opt">optional</span></label>
+        <input id="imageUrl" type="url" placeholder="https://example.com/image.png" />
+      </div>
+
+      <!-- Click Action (optional) -->
+      <div class="field">
+        <label>Click Action <span class="badge-opt">optional</span></label>
+        <input id="clickAction" type="text" placeholder="FLUTTER_NOTIFICATION_CLICK or deep-link" />
+      </div>
+
+      <!-- Send Button -->
+      <button class="btn-send" id="sendBtn" onclick="sendNotification()">
+        <span class="spinner"></span>
+        <span class="btn-label">Send Notification</span>
+      </button>
+
+      <!-- Response -->
+      <div class="response-panel" id="responsePanel">
+        <div class="response-header">
+          <div class="dot"></div>
+          <span id="responseTitle">Response</span>
+        </div>
+        <div class="response-body">
+          <pre id="responseBody"></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="footer">
+    Secured · Firebase Admin SDK ·
+    <a href="https://firebase.google.com/docs/cloud-messaging" target="_blank" rel="noopener">FCM Docs ↗</a>
+  </p>
 </div>
 
 <script>
-const API = "https://promora-gold.vercel.app/api/fcm";
-
 async function sendNotification() {
-  const token = document.getElementById("token").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const body = document.getElementById("body").value.trim();
-  const imageUrl = document.getElementById("imageUrl").value.trim();
-  const result = document.getElementById("result");
+  const apiUrl      = document.getElementById("apiUrl").value.trim();
+  const token       = document.getElementById("token").value.trim();
+  const title       = document.getElementById("title").value.trim();
+  const body        = document.getElementById("body").value.trim();
+  const imageUrl    = document.getElementById("imageUrl").value.trim();
+  const clickAction = document.getElementById("clickAction").value.trim();
 
-  if (!token || !title || !body) {
-    alert("Token, title, and body are required");
+  const panel     = document.getElementById("responsePanel");
+  const panelTitle = document.getElementById("responseTitle");
+  const panelBody = document.getElementById("responseBody");
+  const btn       = document.getElementById("sendBtn");
+
+  /* ── Validation ── */
+  if (!apiUrl || !token || !title || !body) {
+    showResponse("error", "Validation Error", {
+      success: false,
+      error: "API URL, token, title, and body are all required."
+    });
     return;
   }
 
-  result.textContent = "Sending...";
+  /* ── Loading state ── */
+  btn.classList.add("loading");
+  btn.disabled = true;
+  showResponse("info", "Sending…", { status: "Awaiting server response…" });
+
+  const payload = {
+    token,
+    title,
+    body,
+    ...(imageUrl    ? { imageUrl }    : {}),
+    ...(clickAction ? { clickAction } : {}),
+  };
 
   try {
-    const res = await fetch(API, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        title,
-        body,
-        ...(imageUrl ? { imageUrl } : {}),
-      }),
+    const res  = await fetch(apiUrl, {
+      method:  "POST",
+      mode:    "cors",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload),
     });
 
-    const text = await res.text();
-    result.textContent = text;
+    let parsed;
+    const raw = await res.text();
+    try { parsed = JSON.parse(raw); } catch { parsed = { raw }; }
+
+    if (res.ok && parsed?.success) {
+      showResponse("success", `200 OK — Message sent`, parsed);
+    } else {
+      showResponse("error", `${res.status} ${res.statusText}`, parsed);
+    }
 
   } catch (err) {
-    result.textContent = "Network error: " + err.message;
+    showResponse("error", "Network Error", {
+      success: false,
+      error: err.message,
+      hint: "Check the API URL or CORS settings."
+    });
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
   }
 }
+
+function showResponse(type, title, data) {
+  const panel     = document.getElementById("responsePanel");
+  const panelTitle = document.getElementById("responseTitle");
+  const panelBody = document.getElementById("responseBody");
+
+  panel.className      = `response-panel visible ${type}`;
+  panelTitle.textContent = title;
+  panelBody.textContent  = JSON.stringify(data, null, 2);
+}
+
+/* Allow Ctrl+Enter to send from any textarea */
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") sendNotification();
+});
 </script>
 </body>
 </html>
