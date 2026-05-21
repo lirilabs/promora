@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050810; --surface: #0d1120; --surface2: #141828; --surface3: #1c2235;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --accent: #7c6df0; --accent2: #c084fc; --accent3: #f472b6;
+  --text: #f0eef8; --muted: #8b8aa0; --muted2: #5c5b70;
+  --gold: #f0b429; --teal: #2dd4bf; --coral: #fb7185;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.12) 0%, transparent 100%),
+    radial-gradient(2px 2px at 60% 40%, rgba(124,109,240,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 30% 60%, rgba(192,132,252,0.2) 0%, transparent 100%);
+  pointer-events: none; z-index: 0;
+}
+.page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 24px 100px; }
+
+/* NAV TABS */
+.nav-tabs { display: flex; gap: 8px; margin-bottom: 40px; border-bottom: 1px solid var(--border2); padding-bottom: 0; }
+.nav-tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 10px 20px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); cursor: pointer; letter-spacing: 1px; transition: all 0.2s; margin-bottom: -1px; }
+.nav-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+.nav-tab:hover { color: var(--text); }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 50px; }
+.logo-line { font-family: 'DM Serif Display', serif; font-size: clamp(48px, 10vw, 80px); font-style: italic; letter-spacing: -2px; background: linear-gradient(135deg, #c084fc 0%, #7c6df0 40%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 8px; }
+.logo-wave { font-size: 40px; display: inline-block; animation: wave 3s ease-in-out infinite; -webkit-text-fill-color: initial; }
+@keyframes wave { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-8px) rotate(5deg); } }
+.tagline { font-size: 11px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+.header-desc { font-size: 12px; color: var(--muted); line-height: 1.8; max-width: 440px; margin: 0 auto; }
+.space-count { display: inline-flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 7px 16px; font-size: 11px; color: var(--accent2); letter-spacing: 1px; margin-top: 16px; }
+.dot-pulse { width: 6px; height: 6px; background: var(--teal); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
+/* Questions */
+.section-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted2); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.question-block { margin-bottom: 28px; opacity: 0; transform: translateY(16px); animation: fadeUp 0.5s ease forwards; }
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+.q-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.q-num { font-size: 10px; color: var(--accent); letter-spacing: 1px; padding-top: 2px; min-width: 24px; }
+.q-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding-left: 38px; }
+.opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); transition: all 0.2s ease; text-align: left; position: relative; overflow: hidden; }
+.opt::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(124,109,240,0.1), rgba(244,114,182,0.05)); opacity: 0; transition: opacity 0.2s; }
+.opt:hover { border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+.opt:hover::before { opacity: 1; }
+.opt.sel { border-color: var(--accent); color: var(--text); background: var(--surface3); }
+.opt.sel::before { opacity: 1; }
+.opt.sel::after { content: '✓'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--accent2); }
+.opt-trait { font-size: 9px; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 2px; text-transform: uppercase; }
+
+/* Gen button */
+.gen-wrap { text-align: center; margin: 40px 0 24px; }
+.gen-btn { background: linear-gradient(135deg, var(--accent), var(--accent3)); border: none; border-radius: 14px; padding: 16px 48px; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: white; cursor: pointer; letter-spacing: 1px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+.gen-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,109,240,0.4); }
+.gen-btn:active { transform: scale(0.98); }
+
+/* RESULT */
+.result-wrap { display: none; margin-top: 40px; }
+.result-header { border: 1px solid var(--border2); border-radius: 20px; background: var(--surface); padding: 36px; margin-bottom: 18px; position: relative; overflow: hidden; }
+.result-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(124,109,240,0.15) 0%, transparent 70%); pointer-events: none; }
+.rarity-tag { display: inline-block; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; font-weight: 500; }
+.r-common { background: rgba(45,212,191,0.12); color: var(--teal); border: 1px solid rgba(45,212,191,0.25); }
+.r-rare { background: rgba(96,165,250,0.12); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+.r-epic { background: rgba(124,109,240,0.15); color: var(--accent2); border: 1px solid rgba(124,109,240,0.3); }
+.r-legendary { background: rgba(240,180,41,0.12); color: var(--gold); border: 1px solid rgba(240,180,41,0.25); }
+.r-mythic { background: rgba(251,113,133,0.12); color: var(--coral); border: 1px solid rgba(251,113,133,0.25); }
+.fusion-name-display { font-family: 'DM Serif Display', serif; font-size: clamp(40px, 7vw, 64px); font-style: italic; background: linear-gradient(135deg, #e0d9ff, #c084fc, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; margin-bottom: 10px; }
+.fusion-type-display { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+.fusion-desc { font-size: 12px; color: var(--muted); line-height: 1.9; max-width: 560px; border-left: 2px solid var(--accent); padding-left: 14px; margin-bottom: 20px; }
+
+/* MEANING CARD */
+.meaning-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 14px; }
+.meaning-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.meaning-row:last-child { border-bottom: none; }
+.meaning-trait { font-size: 10px; letter-spacing: 1.5px; color: var(--accent2); min-width: 52px; text-transform: uppercase; font-weight: 500; }
+.meaning-sep { color: var(--muted2); font-size: 11px; }
+.meaning-text { font-size: 11px; color: var(--muted); line-height: 1.5; flex: 1; }
+.meaning-badge { font-size: 9px; padding: 3px 10px; border-radius: 20px; background: var(--surface3); border: 1px solid var(--border2); color: var(--muted2); letter-spacing: 1px; white-space: nowrap; }
+
+/* Trait pills */
+.trait-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.trait-pill { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 13px; border-radius: 20px; background: var(--surface3); border: 1px solid var(--border2); color: var(--accent2); }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; text-align: center; }
+.stat-val { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); line-height: 1; margin-bottom: 5px; }
+.stat-lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
+
+/* Bars */
+.prob-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 14px; }
+.card-title { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted2); margin-bottom: 20px; }
+.bar-item { margin-bottom: 12px; }
+.bar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.bar-trait { font-size: 11px; color: var(--text); letter-spacing: 0.5px; }
+.bar-desc { font-size: 9px; color: var(--muted2); }
+.bar-pct { font-size: 11px; color: var(--accent2); min-width: 34px; text-align: right; }
+.bar-track { height: 4px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent3)); transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); width: 0; }
+
+/* Math */
+.math-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 14px; }
+.math-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.math-row:last-child { border-bottom: none; }
+.math-label { color: var(--muted2); font-size: 10px; letter-spacing: 1px; min-width: 180px; }
+.math-value { color: var(--teal); font-size: 11px; }
+.math-accent { color: var(--accent2); }
+
+/* Alt */
+.alt-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 14px; }
+.alt-names-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 9px; }
+.alt-name-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 13px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.alt-name-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+.alt-name-text { font-family: 'DM Serif Display', serif; font-size: 17px; font-style: italic; color: var(--accent2); display: block; margin-bottom: 3px; }
+.alt-name-seed { font-size: 9px; color: var(--muted2); letter-spacing: 1px; }
+
+/* Explorer */
+.explorer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 14px; }
+.explorer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+.explorer-grid::-webkit-scrollbar { width: 4px; }
+.explorer-grid::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+.explorer-grid::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.combo-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; transition: all 0.2s; }
+.combo-item:hover { border-color: var(--border2); background: var(--surface3); }
+.combo-name { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 15px; color: var(--accent2); margin-bottom: 3px; }
+.combo-traits { font-size: 9px; color: var(--muted2); letter-spacing: 0.5px; }
+.explorer-note { font-size: 11px; color: var(--muted2); margin-top: 12px; line-height: 1.7; }
+
+.reset-btn { background: transparent; border: 1px solid var(--border2); border-radius: 10px; padding: 11px 26px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-top: 18px; }
+.reset-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ===== ALL TRAITS SCREEN ===== */
+.search-bar-wrap { margin-bottom: 28px; position: relative; }
+.search-bar { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 14px 20px 14px 44px; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s; }
+.search-bar::placeholder { color: var(--muted2); }
+.search-bar:focus { border-color: var(--accent); }
+.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted2); font-size: 16px; pointer-events: none; }
+.traits-count { font-size: 11px; color: var(--muted2); margin-bottom: 20px; }
+.all-traits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.trait-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; transition: all 0.2s; cursor: default; }
+.trait-card:hover { border-color: var(--border2); background: var(--surface3); }
+.trait-card-name { font-size: 10px; letter-spacing: 2px; color: var(--accent2); text-transform: uppercase; margin-bottom: 6px; font-weight: 500; }
+.trait-card-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.trait-card-syls { font-size: 9px; color: var(--muted2); letter-spacing: 1px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.trait-card-syls span { display: inline-block; background: var(--surface3); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; margin: 2px 3px 2px 0; }
+.no-results { text-align: center; padding: 60px 20px; color: var(--muted2); font-size: 13px; }
+
+/* Stagger */
+.question-block:nth-child(1){animation-delay:.05s}.question-block:nth-child(2){animation-delay:.1s}.question-block:nth-child(3){animation-delay:.15s}.question-block:nth-child(4){animation-delay:.2s}.question-block:nth-child(5){animation-delay:.25s}.question-block:nth-child(6){animation-delay:.3s}.question-block:nth-child(7){animation-delay:.35s}.question-block:nth-child(8){animation-delay:.4s}.question-block:nth-child(9){animation-delay:.45s}.question-block:nth-child(10){animation-delay:.5s}
+
+@media(max-width:600px){.options-grid{grid-template-columns:1fr;padding-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}.all-traits-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- NAV -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showScreen('quiz')">⟡ My Resonance</button>
+    <button class="nav-tab" onclick="showScreen('alltraits')">◈ All 20 Traits</button>
+  </div>
+
+  <!-- ===== SCREEN: QUIZ ===== -->
+  <div class="screen active" id="screen-quiz">
+    <div class="header">
+      <div class="logo-line">Melo <span class="logo-wave">🌊</span></div>
+      <div class="tagline">Procedural Resonance Fusion Engine</div>
+      <div class="header-desc">Every combination mathematically generates a unique identity from over 1,000,000 possible fusions.</div>
+      <div class="space-count"><div class="dot-pulse"></div>1,048,576+ possible resonance identities</div>
+    </div>
+
+    <div class="section-label">Select your resonances</div>
+    <div id="questions"></div>
+
+    <div class="gen-wrap">
+      <button class="gen-btn" onclick="analyze()"><span>⟡ Generate My Resonance</span></button>
+    </div>
+
+    <div class="result-wrap" id="result">
+      <div class="result-header">
+        <div class="rarity-tag" id="rarityTag">Common</div>
+        <div class="fusion-name-display" id="fusionName">—</div>
+        <div class="fusion-type-display" id="fusionType">—</div>
+        <div class="fusion-desc" id="fusionDesc">—</div>
+        <div class="trait-pills" id="traitPills"></div>
+      </div>
+
+      <div class="meaning-card">
+        <div class="card-title">Your trait meanings — what each layer of you represents</div>
+        <div id="meaningRows"></div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="prob-card">
+        <div class="card-title">Trait probability distribution</div>
+        <div id="bars"></div>
+      </div>
+
+      <div class="math-card">
+        <div class="card-title">Probability mathematics</div>
+        <div id="mathBreakdown"></div>
+      </div>
+
+      <div class="alt-card">
+        <div class="card-title">Other valid fusions for this trait set</div>
+        <div class="alt-names-grid" id="altNamesGrid"></div>
+      </div>
+
+      <div class="explorer-card">
+        <div class="card-title">All possible fusions from your top traits</div>
+        <div class="explorer-grid" id="explorerGrid"></div>
+        <div class="explorer-note" id="explorerNote"></div>
+      </div>
+
+      <div style="text-align:center">
+        <button class="reset-btn" onclick="resetAll()">↺ Start over</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN: ALL TRAITS ===== -->
+  <div class="screen" id="screen-alltraits">
+    <div class="header" style="margin-bottom:30px;">
+      <div class="logo-line" style="font-size:clamp(36px,7vw,56px);">All 20 Traits</div>
+      <div class="tagline">Complete resonance identity catalog</div>
+      <div class="header-desc">Every trait is a dimension of identity. Each carries a unique meaning, sound signature, and emotional frequency.</div>
+    </div>
+
+    <div class="search-bar-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-bar" type="text" id="traitSearch" placeholder="Search by name, meaning, or syllable..." oninput="filterTraits()">
+    </div>
+    <div class="traits-count" id="traitsCount">Showing all 20 traits</div>
+    <div class="all-traits-grid" id="allTraitsGrid"></div>
+  </div>
+
+</div>
+
+<script>
+const TRAIT_DATA = {
+  LUNE: { desc: "Emotionally deep and reflective — you feel the world before you understand it; silence speaks volumes to you.", syl: ["lu","lun","une","luna","lunae"] },
+  ORIN: { desc: "Analytical and thoughtful — your mind is a library; you process before you act and reason before you feel.", syl: ["or","rin","ori","orin","ron"] },
+  MELI: { desc: "Warm and nurturing — your presence is a safe place; people naturally open up and soften around you.", syl: ["mel","eli","mi","meli","mel"] },
+  VEXA: { desc: "Chaotic energetic presence — you move fast, spark things, and leave rooms changed without trying to.", syl: ["vex","xa","ve","vexa","vex"] },
+  LYRA: { desc: "Creative and artistic — you see the world in textures and metaphors; beauty is not optional, it is necessary.", syl: ["ly","ra","ira","lyr","lyra"] },
+  NYXO: { desc: "Mysterious and reserved — you reveal yourself in layers; depth is your language and silence is your power.", syl: ["ny","xo","nex","nyx","nyxo"] },
+  SOLA: { desc: "Highly social and expressive — you come alive in crowds; energy flows through you into every room you enter.", syl: ["sol","la","so","sola","sol"] },
+  KOVA: { desc: "Ambitious and dominant — you are built for impact; soft power and hard vision move together in you.", syl: ["kov","ova","ko","kav","kova"] },
+  AURA: { desc: "Peaceful calming energy — your presence lowers the temperature of any conflict; stillness is your strength.", syl: ["aur","ura","au","auri","aura"] },
+  VYRA: { desc: "Adaptive and flexible — you bend without breaking; you mirror environments and people without losing yourself.", syl: ["vy","ra","vira","vyr","vyra"] },
+  SYVA: { desc: "Nature-connected and grounded — roots matter to you; you find truth in the slow, the living, and the real.", syl: ["sy","va","syl","syv","syva"] },
+  ZENO: { desc: "Minimal calm thinker — you strip away the noise; clarity over complexity, intention over impulse, always.", syl: ["zen","eno","ze","zeni","zeno"] },
+  ELYN: { desc: "Emotionally vulnerable connector — your openness is your gift; you build bridges by being willing to be seen first.", syl: ["ely","lyn","el","eyn","elyn"] },
+  TAZI: { desc: "Humorous playful chaos — laughter is your love language; you turn tension into joy and awkward into unforgettable.", syl: ["ta","zi","taz","tazi","taz"] },
+  ROVA: { desc: "Explorer and adventurer — the unknown pulls you forward; you collect experiences not things, and stories not status.", syl: ["rov","ova","ro","rova","rov"] },
+  MYLO: { desc: "Comfort and safety seeker — you build soft landings for yourself and others; home is a feeling you carry with you.", syl: ["my","lo","myl","mylo","myl"] },
+  XENI: { desc: "Curious experimental thinker — questions excite you more than answers; you prototype life before committing to it.", syl: ["xen","eni","xe","xeni","xen"] },
+  DREO: { desc: "Dream-driven visionary — you live slightly ahead of reality; your imagination is not escapism, it is your blueprint.", syl: ["dre","reo","dr","dreo","dre"] },
+  KYRO: { desc: "Intense passionate force — you do nothing halfway; your love, your anger, your focus — all of it burns at full heat.", syl: ["kyr","yro","ky","kyri","kyro"] },
+  NOVA: { desc: "Future-focused strategist — you think in systems and timelines; what you build now is already three steps ahead.", syl: ["nov","ova","no","novy","nova"] }
+};
+
+const QUESTIONS = [
+  { q: "What type of emotional connection feels strongest?", a: [["Deep emotional understanding","LUNE"],["Warm caring affection","MELI"],["Playful chemistry","TAZI"],["Powerful intense attraction","KYRO"]] },
+  { q: "What describes your inner world most?", a: [["Dreams and imagination","DREO"],["Logic and analysis","ORIN"],["Creativity and visuals","LYRA"],["Peace and silence","ZENO"]] },
+  { q: "What kind of people attract you naturally?", a: [["Emotionally vulnerable people","ELYN"],["Wild energetic people","VEXA"],["Calm peaceful humans","AURA"],["Intelligent strategic minds","NOVA"]] },
+  { q: "What environment feels most alive to you?", a: [["Rain and music","LUNE"],["Busy city nights","VEXA"],["Nature silence","SYVA"],["Minimal private spaces","MYLO"]] },
+  { q: "How do you behave socially?", a: [["Observe quietly first","NYXO"],["Talk to everyone","SOLA"],["Adapt to any group","VYRA"],["Stay close to trusted people","MYLO"]] },
+  { q: "What secretly motivates you most?", a: [["Love and closeness","MELI"],["Recognition and power","KOVA"],["Curiosity and discovery","XENI"],["Freedom and exploration","ROVA"]] },
+  { q: "What type of future feels meaningful?", a: [["Creative legacy","LYRA"],["Peaceful simple life","AURA"],["Massive impact on world","NOVA"],["Adventure and movement","ROVA"]] },
+  { q: "How do you react when emotionally overwhelmed?", a: [["Disappear silently","NYXO"],["Need emotional comfort","ELYN"],["Distract with people","SOLA"],["Analyze everything deeply","ORIN"]] },
+  { q: "What energy feels closest to you?", a: [["Soft and emotional","LUNE"],["Intense and passionate","KYRO"],["Funny and chaotic","TAZI"],["Stable and grounded","SYVA"]] },
+  { q: "What feels most attractive in relationships?", a: [["Deep vulnerability","ELYN"],["Comfort and safety","MYLO"],["Adventure and spontaneity","ROVA"],["Ambition and drive","KOVA"]] }
+];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'alltraits') renderAllTraits('');
+}
+
+// Render questions
+const qContainer = document.getElementById("questions");
+QUESTIONS.forEach((q, i) => {
+  const block = document.createElement("div");
+  block.className = "question-block";
+  block.innerHTML = `<div class="q-header"><div class="q-num">0${i+1}</div><div class="q-text">${q.q}</div></div><div class="options-grid">${q.a.map(a=>`<button class="opt" data-trait="${a[1]}"><div class="opt-trait">${a[1]}</div>${a[0]}</button>`).join("")}</div>`;
+  qContainer.appendChild(block);
+});
+
+document.addEventListener("click", e => {
+  if (e.target.closest(".opt")) e.target.closest(".opt").classList.toggle("sel");
+});
+
+function seededRand(seed) {
+  let s = seed >>> 0;
+  return () => { s = Math.imul(1664525, s) + 1013904223 >>> 0; return s / 0xFFFFFFFF; };
+}
+function strToSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(16777619, h) >>> 0; }
+  return h;
+}
+function buildName(traits, offset = 0) {
+  const sig = traits.slice().sort().join("|") + "|" + offset;
+  const rand = seededRand(strToSeed(sig));
+  const parts = traits.map(t => { const syls = TRAIT_DATA[t].syl; return syls[Math.floor(rand() * syls.length)]; });
+  const raw = parts.join("");
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+function nCr(n, k) {
+  if (k > n) return 0; if (k === 0 || k === n) return 1;
+  let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+function calcCombinations(k, n = 20) { return nCr(n, k); }
+function calcUniqueness(c) { return (1 - 1 / Math.max(c, 1)) * 100; }
+function getRarity(u) {
+  if (u >= 99.99) return { label: "Mythic", cls: "r-mythic" };
+  if (u >= 99.9) return { label: "Legendary", cls: "r-legendary" };
+  if (u >= 99) return { label: "Epic", cls: "r-epic" };
+  if (u >= 95) return { label: "Rare", cls: "r-rare" };
+  return { label: "Common", cls: "r-common" };
+}
+function permuteTraits(traits) {
+  if (traits.length <= 1) return [traits.slice()];
+  const result = [];
+  for (let i = 0; i < traits.length; i++) {
+    const rest = traits.slice(0, i).concat(traits.slice(i + 1));
+    permuteTraits(rest).forEach(p => result.push([traits[i], ...p]));
+  }
+  return result;
+}
+
+function analyze() {
+  const selected = document.querySelectorAll(".opt.sel");
+  if (selected.length < 3) { alert("Select at least 3 options to generate your resonance 🌊"); return; }
+  const scores = {};
+  selected.forEach(el => { const t = el.dataset.trait; scores[t] = (scores[t] || 0) + 1; });
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const total = selected.length;
+  const activeTraits = sorted.map(s => s[0]);
+  const topTraits = activeTraits.slice(0, 5);
+  const mainName = buildName(topTraits, 0);
+  const combos = calcCombinations(activeTraits.length);
+  const uniqueness = calcUniqueness(combos);
+  const rarity = getRarity(uniqueness);
+
+  const rarityTag = document.getElementById("rarityTag");
+  rarityTag.textContent = rarity.label + " resonance";
+  rarityTag.className = "rarity-tag " + rarity.cls;
+  document.getElementById("fusionName").textContent = mainName;
+  document.getElementById("fusionType").textContent = topTraits.join(" • ");
+  document.getElementById("fusionDesc").textContent = "A multidimensional resonance blending " + activeTraits.map(t => TRAIT_DATA[t].desc.split(' — ')[0].toLowerCase()).join(", ") + ".";
+  document.getElementById("traitPills").innerHTML = activeTraits.map(t => `<div class="trait-pill">${t}</div>`).join("");
+
+  // MEANING ROWS — the new feature
+  const RANK_LABELS = ["Primary","Secondary","Tertiary","Supporting","Underlying","Background","Subtle","Latent","Trace","Echo"];
+  document.getElementById("meaningRows").innerHTML = sorted.map(([trait, score], i) => {
+    const shortDesc = TRAIT_DATA[trait].desc.split(' — ');
+    return `<div class="meaning-row">
+      <span class="meaning-trait">${trait}</span>
+      <span class="meaning-sep">—</span>
+      <span class="meaning-text">${shortDesc[1] || shortDesc[0]}</span>
+      <span class="meaning-badge">${RANK_LABELS[i] || 'Present'}</span>
+    </div>`;
+  }).join("");
+
+  const totalSpace = Math.pow(4, 10);
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-card"><div class="stat-val">${activeTraits.length}</div><div class="stat-lbl">Active traits</div></div>
+    <div class="stat-card"><div class="stat-val">${combos.toLocaleString()}</div><div class="stat-lbl">Trait combos</div></div>
+    <div class="stat-card"><div class="stat-val">${uniqueness.toFixed(3)}%</div><div class="stat-lbl">Uniqueness</div></div>
+    <div class="stat-card"><div class="stat-val">${totalSpace.toLocaleString()}</div><div class="stat-lbl">Total space</div></div>`;
+
+  const barsEl = document.getElementById("bars");
+  barsEl.innerHTML = sorted.map(([trait, score]) => {
+    const pct = Math.round((score / total) * 100);
+    return `<div class="bar-item"><div class="bar-row"><div><span class="bar-trait">${trait}</span><span class="bar-desc"> — ${TRAIT_DATA[trait].desc.split(' — ')[0]}</span></div><span class="bar-pct">${pct}%</span></div><div class="bar-track"><div class="bar-fill" data-pct="${pct}" style="width:0%"></div></div></div>`;
+  }).join("");
+  requestAnimationFrame(() => { document.querySelectorAll(".bar-fill").forEach(el => { el.style.width = el.dataset.pct + "%"; }); });
+
+  const p = activeTraits.length / 20;
+  const probExact = Math.pow(p, activeTraits.length) * Math.pow(1 - p, 20 - activeTraits.length);
+  const nameSpaceSize = Math.pow(5, topTraits.length);
+  document.getElementById("mathBreakdown").innerHTML = `
+    <div class="math-row"><span class="math-label">TOTAL TRAIT POOL</span><span class="math-value">20 traits</span></div>
+    <div class="math-row"><span class="math-label">YOUR ACTIVE TRAITS</span><span class="math-value math-accent">${activeTraits.length} traits</span></div>
+    <div class="math-row"><span class="math-label">COMBINATION FORMULA</span><span class="math-value">C(20, ${activeTraits.length}) = ${combos.toLocaleString()}</span></div>
+    <div class="math-row"><span class="math-label">SELECTION PROBABILITY</span><span class="math-value">${(probExact * 100).toExponential(3)}</span></div>
+    <div class="math-row"><span class="math-label">UNIQUENESS SCORE</span><span class="math-value math-accent">${uniqueness.toFixed(6)}%</span></div>
+    <div class="math-row"><span class="math-label">NAME SPACE SIZE</span><span class="math-value">5^${topTraits.length} = ${nameSpaceSize.toLocaleString()} names</span></div>
+    <div class="math-row"><span class="math-label">TOTAL POSSIBILITY SPACE</span><span class="math-value math-accent">${(combos * nameSpaceSize).toLocaleString()}+ identities</span></div>
+    <div class="math-row"><span class="math-label">YOUR IDENTITY SEED</span><span class="math-value">#${strToSeed(topTraits.sort().join("|"))}</span></div>`;
+
+  const altNames = [];
+  for (let i = 1; i <= 14; i++) { const n = buildName(topTraits, i); if (n !== mainName && !altNames.includes(n)) altNames.push(n); }
+  document.getElementById("altNamesGrid").innerHTML = altNames.map((n, i) => `<div class="alt-name-item"><span class="alt-name-text">${n}</span><span class="alt-name-seed">variant #${i + 1}</span></div>`).join("");
+
+  const explorerTraits = topTraits.slice(0, 4);
+  const allPerms = permuteTraits(explorerTraits);
+  const seenNames = new Set([mainName]);
+  const explorerItems = [];
+  allPerms.forEach(perm => { for (let offset = 0; offset < 3; offset++) { const n = buildName(perm, offset); if (!seenNames.has(n)) { seenNames.add(n); explorerItems.push({ name: n, traits: perm }); } } });
+  document.getElementById("explorerGrid").innerHTML = explorerItems.slice(0, 48).map(item => `<div class="combo-item"><div class="combo-name">${item.name}</div><div class="combo-traits">${item.traits.join(" • ")}</div></div>`).join("");
+  document.getElementById("explorerNote").textContent = `Showing ${Math.min(48, explorerItems.length)} of ${explorerItems.length}+ valid fusions derived from your top traits (${explorerTraits.join(" • ")}). Each rearrangement produces a distinct identity.`;
+
+  const resultEl = document.getElementById("result");
+  resultEl.style.display = "block";
+  setTimeout(() => { resultEl.scrollIntoView({ behavior: "smooth", block: "start" }); }, 100);
+}
+
+function resetAll() {
+  document.querySelectorAll(".opt.sel").forEach(el => el.classList.remove("sel"));
+  document.getElementById("result").style.display = "none";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ALL TRAITS SCREEN
+function renderAllTraits(query) {
+  const q = query.toLowerCase().trim();
+  const allNames = Object.keys(TRAIT_DATA);
+  const filtered = q === '' ? allNames : allNames.filter(name => {
+    const d = TRAIT_DATA[name];
+    return name.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q) || d.syl.some(s => s.includes(q));
+  });
+  const count = document.getElementById("traitsCount");
+  count.textContent = q === '' ? `Showing all 20 traits` : `${filtered.length} of 20 traits match "${query}"`;
+  const grid = document.getElementById("allTraitsGrid");
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="no-results" style="grid-column:1/-1">No traits match that search. Try a keyword like "calm", "love", or "dream".</div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(name => {
+    const d = TRAIT_DATA[name];
+    const parts = d.desc.split(' — ');
+    return `<div class="trait-card">
+      <div class="trait-card-name">${name}</div>
+      <div style="font-size:11px;color:var(--accent2);margin-bottom:6px;font-style:italic">${parts[0]}</div>
+      <div class="trait-card-desc">${parts[1] || ''}</div>
+      <div class="trait-card-syls">syllables: ${d.syl.map(s=>`<span>${s}</span>`).join('')}</div>
+    </div>`;
+  }).join("");
+}
+
+function filterTraits() {
+  renderAllTraits(document.getElementById("traitSearch").value);
+}
+
+renderAllTraits('');
+</script>
+</body>
+</html>
